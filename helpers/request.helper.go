@@ -33,6 +33,7 @@ type EmailResponse models.EmailResponse
 // DoRequest performs a request to zincsearch
 func DoRequest(query string, w http.ResponseWriter) {
 	var email *EmailResponse
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -58,7 +59,7 @@ func DoRequest(query string, w http.ResponseWriter) {
 
 	email, err = ZincSearchResponseStatus(resp)
 	if err != nil {
-		RespondWithJSON(w, http.StatusNoContent, map[string]string{"message": "Could not access the database."})
+		RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%s", err)})
 
 		return
 	}

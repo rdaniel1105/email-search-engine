@@ -3,6 +3,7 @@ package handlers
 import (
 	"example/mamuro/helpers"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -14,32 +15,26 @@ func Routes() chi.Router {
 
 	r.Get("/", List)
 	r.Route("/{input}", func(r chi.Router) {
-		r.With(ValidateURL).Get("/", GetData())
+		r.Get("/", GetData())
 	})
 
 	return r
 }
 
-// ValidateURL validates the URL for the parameter route
-func ValidateURL(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		inputParam := chi.URLParam(r, "input")
-		if inputParam == "" {
-			w.WriteHeader(404)
-			_, err := w.Write([]byte(http.StatusText(404)))
-			if err != nil {
-				fmt.Println(err)
-			}
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 // List displays the list of emails obtained from the request to ZincSearch.
 func List(w http.ResponseWriter, r *http.Request) {
+	requestBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	valid := helpers.Validate(requestBody)
+	if !valid {
+		fmt.Print("Invalid body from request")
+		helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"Error": "Request should not have a body."})
+		return
+	}
+
 	query := `{
         "search_type": "alldocuments",
         "query":
@@ -53,6 +48,17 @@ func List(w http.ResponseWriter, r *http.Request) {
 func GetData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		term := chi.URLParam(r, "input")
+		requestBody, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		valid := helpers.Validate(requestBody)
+		if !valid {
+			fmt.Print("Invalid body from request")
+			helpers.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"Error": "Request should not have a body."})
+			return
+		}
 
 		//validate term with Regex
 		query := `{
