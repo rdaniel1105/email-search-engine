@@ -14,7 +14,7 @@ func Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/", List)
-	// r.Route("/{input}", func(r chi.Router) {
+	// r.Route("/{id}", func(r chi.Router) {
 	// 	r.Get("/", GetData())
 	// })
 
@@ -48,7 +48,7 @@ func List(w http.ResponseWriter, r *http.Request) {
 // // GetData makes a request to ZincSearch to get the data requested.
 // func GetData() http.HandlerFunc {
 // 	return func(w http.ResponseWriter, r *http.Request) {
-// 		term := chi.URLParam(r, "input")
+// 		term := chi.URLParam(r, "id")
 // 		requestBody, err := ioutil.ReadAll(r.Body)
 // 		if err != nil {
 // 			fmt.Println(err)
