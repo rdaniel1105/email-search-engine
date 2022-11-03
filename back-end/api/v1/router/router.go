@@ -47,7 +47,7 @@ func Initialize() *chi.Mux {
 		//middleware.Heartbeat("/health"), //for heartbeat process such as Kubernetes liveprobeness
 		cors.Handler(cors.Options{
 			// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-			AllowedOrigins: []string{"https://*", "http://*"},
+			AllowedOrigins: []string{"http://localhost:8080"},
 			// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 			AllowedMethods:   []string{"GET"},
 			AllowedHeaders:   []string{"Accept", "Content-Type"},
@@ -60,12 +60,12 @@ func Initialize() *chi.Mux {
 	//Sets context for all requests
 	router.Use(middleware.Timeout(30 * time.Second))
 
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("Welcome"))
-		if err != nil {
-			fmt.Println(err)
-		}
-	})
+	// router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	_, err := w.Write([]byte("Welcome"))
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	// })
 
 	//routes
 	router.Route(searchPath, func(r chi.Router) {

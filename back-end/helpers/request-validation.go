@@ -23,7 +23,12 @@ func ValidateBody(w http.ResponseWriter, body []byte) (string, bool) {
 		fmt.Println(err)
 	}
 
-	if string(body) == "" || !strings.Contains(string(body), "term") {
+	if string(body) == "" {
+		RespondWithJSON(w, http.StatusOK, map[string]string{"Message": ``})
+		return BodyParsed.Term, false
+	}
+
+	if !strings.Contains(string(body), "term") {
 		RespondWithJSON(w, http.StatusBadRequest, map[string]string{"Message": `Empty body or key is different than "term"`})
 		return BodyParsed.Term, false
 	}
