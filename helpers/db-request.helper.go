@@ -31,7 +31,7 @@ var requestHeaders = reqHeaders{
 type EmailResponse models.EmailResponse
 
 // DoRequest performs a request to zincsearch
-func DoRequest(query string, w http.ResponseWriter) {
+func DoRequest(w http.ResponseWriter, query string) {
 	var email *EmailResponse
 
 	err := godotenv.Load()
