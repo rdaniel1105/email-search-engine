@@ -15,17 +15,22 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const (
+	searchPath = "/api/search"
+)
+
 // ServeRouter serves the router in which the server will be running
 func ServeRouter() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("error loading .env file")
 	}
 
 	port := os.Getenv("PORT")
+
 	r := Initialize()
 
-	fmt.Printf("Server running in port:%+v", port)
+	fmt.Printf("server running in port:%+v", port)
 	server := http.Server{
 		Addr:        fmt.Sprintf(":%s", port),
 		Handler:     r,
@@ -36,8 +41,6 @@ func ServeRouter() {
 
 // Initialize initializes the Server
 func Initialize() *chi.Mux {
-	searchPath := "/api/search"
-
 	router := chi.NewRouter()
 	router.Use(
 		render.SetContentType(render.ContentTypeJSON), //forces Content-type
@@ -47,9 +50,9 @@ func Initialize() *chi.Mux {
 		//middleware.Heartbeat("/health"), //for heartbeat process such as Kubernetes liveprobeness
 		cors.Handler(cors.Options{
 			// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-			AllowedOrigins: []string{"http://localhost:8080"},
+			AllowedOrigins: []string{"http://localhost:8080"}, // TODO make this a const
 			// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-			AllowedMethods:   []string{"GET"},
+			AllowedMethods:   []string{http.MethodGet},
 			AllowedHeaders:   []string{"Accept", "Content-Type"},
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: false,

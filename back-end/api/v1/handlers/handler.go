@@ -13,7 +13,7 @@ import (
 func Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/", List)
+	r.Get("/", ListEmails)
 	// r.Route("/{id}", func(r chi.Router) {
 	// 	r.Get("/", GetData())
 	// })
@@ -21,28 +21,31 @@ func Routes() chi.Router {
 	return r
 }
 
-// List displays the list of emails obtained from the request to ZincSearch.
-func List(w http.ResponseWriter, r *http.Request) {
-
+// ListEmails displays the list of emails obtained from the request to ZincSearch.
+func ListEmails(w http.ResponseWriter, r *http.Request) {
 	requestBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println(err)
-	}
-
-	term, valid := helpers.ValidateBody(w, requestBody)
-	if !valid {
-		fmt.Print("Invalid body from request")
+		fmt.Println(fmt.Errorf("reading request body: %w", err))
 		return
 	}
-	query := helpers.GetQueryForRequest(r, term)
-	// query := `{
-	//     "search_type": "alldocuments",
-	//     "query":
-	//     {"term": ""},
-	//     "_source": ["From","To","Subject", "Body","Date","Message-ID"]
-	// }`
 
-	helpers.DoRequest(w, query)
+	term, err := helpers.ValidateBody(w, requestBody)
+	if err != nil {
+		fmt.Println(fmt.Errorf("validate body: %w", err))
+		return
+	}
+
+	query, err := helpers.GetQueryParamsForRequest(r, term)
+	if err != nil {
+		fmt.Println(fmt.Errorf("Get query for request: %w", err))
+		return
+	}
+
+	err = helpers.DoRequest(w, query)
+	if err != nil {
+		fmt.Println(fmt.Errorf("DoRequest: %w", err))
+		return
+	}
 }
 
 // // GetData makes a request to ZincSearch to get the data requested.

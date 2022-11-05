@@ -2,15 +2,13 @@ package helpers
 
 import (
 	"encoding/json"
+	"errors"
 	"example/mamuro/models"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 type reqHeaders struct {
@@ -27,23 +25,23 @@ var requestHeaders = reqHeaders{
 	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
 }
 
+var (
+	errDBRequest  = errors.New("internal server error, could not connect to database")
+	errDBResponse = errors.New("internal server error, unexpected response from database")
+)
+
 // EmailResponse copies the underlying structure coming from models
 type EmailResponse models.EmailResponse
 
 // DoRequest performs a request to zincsearch
-func DoRequest(w http.ResponseWriter, query string) {
+func DoRequest(w http.ResponseWriter, query string) error {
 	var email *EmailResponse
-
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 
 	zincSearchURL := os.Getenv("ZincSearchURL")
 
 	req, err := http.NewRequest(http.MethodPost, zincSearchURL, strings.NewReader(query))
 	if err != nil {
-		fmt.Print(err)
+		return fmt.Errorf("newrequest wrapping: %w", err)
 	}
 
 	req.SetBasicAuth(requestHeaders.admin, requestHeaders.password)
@@ -52,20 +50,18 @@ func DoRequest(w http.ResponseWriter, query string) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"InternalServerError": "Could not connect to database."})
-
-		return
+		return ResponseErrorHelper(w, http.StatusInternalServerError, errDBRequest.Error(), fmt.Errorf("zincSearch request: %w", err))
 	}
 
 	email, err = ZincSearchResponseStatus(resp)
 	if err != nil {
-		RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%s", err)})
-
-		return
+		return ResponseErrorHelper(w, http.StatusInternalServerError, errDBResponse.Error(), fmt.Errorf("zincSearch response: %w", err))
 	}
 
-	RespondWithJSON(w, http.StatusOK, map[string]interface{}{"total": email.Hits.Total, "hits": email.Hits.Hits})
+	JSONErrorCheck := JSONResponse(w, http.StatusOK, map[string]interface{}{"total": email.Hits.Total, "hits": email.Hits.Hits})
+	err = ResponseErrorChecker(JSONErrorCheck, nil)
 
+	return err
 }
 
 // ZincSearchResponseStatus ensures we're getting the proper response status from the database.
@@ -76,13 +72,13 @@ func ZincSearchResponseStatus(httpResponse *http.Response) (*EmailResponse, erro
 
 	body, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		fmt.Println("Error reading from API:", err)
+		fmt.Println("reading from API:", err)
 		return statusResponse, err
 	}
 
 	err = json.Unmarshal(body, statusResponse)
 	if err != nil {
-		fmt.Println("Error parsing JSON:", err)
+		fmt.Println("parsing JSON:", err)
 		return statusResponse, err
 	}
 
@@ -92,6 +88,6 @@ func ZincSearchResponseStatus(httpResponse *http.Response) (*EmailResponse, erro
 func closeResponseBody(response *http.Response) {
 	err := response.Body.Close()
 	if err != nil {
-		fmt.Println("Error closing response body:", err)
+		fmt.Println("error closing response body:", err)
 	}
 }
