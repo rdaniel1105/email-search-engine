@@ -37,7 +37,11 @@ func ListEmails(w http.ResponseWriter, r *http.Request) {
 
 	query, err := helpers.GetQueryParamsForRequest(r, term)
 	if err != nil {
+		JSONErrorCheck := helpers.JSONResponse(w, http.StatusOK, map[string]interface{}{"message": err})
+		err = helpers.ResponseErrorChecker(JSONErrorCheck, err)
+
 		fmt.Println(fmt.Errorf("Get query for request: %w", err))
+
 		return
 	}
 

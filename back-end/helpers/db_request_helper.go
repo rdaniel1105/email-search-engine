@@ -33,6 +33,9 @@ var (
 // EmailResponse copies the underlying structure coming from models
 type EmailResponse models.EmailResponse
 
+// ErrorResponseMessage will be used to send errors in JSONResponse
+type ErrorResponseMessage map[string]string
+
 // DoRequest performs a request to zincsearch
 func DoRequest(w http.ResponseWriter, query string) error {
 	var email *EmailResponse

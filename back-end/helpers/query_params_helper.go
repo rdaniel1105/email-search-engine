@@ -6,7 +6,8 @@ import "net/http"
 func GetQueryParamsForRequest(r *http.Request, term string) (string, error) {
 	var query string
 
-	if from, limit := r.URL.Query().Get("from"), r.URL.Query().Get("limit"); from != "" && limit != "" {
+	from, limit := r.URL.Query().Get("from"), r.URL.Query().Get("limit")
+	if from != "" && limit != "" {
 		err := ValidateQueryParams(from)
 		if err != nil {
 			return "", err
@@ -22,7 +23,6 @@ func GetQueryParamsForRequest(r *http.Request, term string) (string, error) {
 		return query, nil
 	}
 
-	from := r.URL.Query().Get("from")
 	if from != "" {
 		err := ValidateQueryParams(from)
 		if err != nil {
@@ -32,7 +32,6 @@ func GetQueryParamsForRequest(r *http.Request, term string) (string, error) {
 		from = "0"
 	}
 
-	limit := r.URL.Query().Get("limit")
 	if limit != "" {
 		err := ValidateQueryParams(limit)
 		if err != nil {
