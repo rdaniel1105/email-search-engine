@@ -1,28 +1,24 @@
 <template>
-  <div id="app">
+  <div class="flex flex-col min-h-screen bg-cool-blacky">
+    <site-navigation/>
+    <search-box/>
     <main>
-    <div class="search-box">
-      <h1>Mamuro-Email</h1>
-    <input type="text" class="search-bar" placeholder="Search..."/>
-    </div>
-  </main>
+      
+    </main>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-export default defineComponent ({
-  name: 'App',
+import { defineComponent } from 'vue';
+import SearchBox from './components/SearchBox.vue';
+import SiteNavigation from './components/SiteNavigation.vue';
+
+export default defineComponent({
+  components: { SiteNavigation, SearchBox },
+  name: 'App'
 });
 </script>
 
-<!-- <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style> -->
+<style>
+
+</style>

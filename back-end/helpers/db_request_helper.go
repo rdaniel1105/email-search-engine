@@ -56,7 +56,7 @@ func DoRequest(w http.ResponseWriter, query string) error {
 		return ResponseErrorHelper(w, http.StatusInternalServerError, errDBRequest.Error(), fmt.Errorf("zincSearch request: %w", err))
 	}
 
-	email, err = ZincSearchResponseStatus(resp)
+	email, err = DataBaseResponseStatus(resp)
 	if err != nil {
 		return ResponseErrorHelper(w, http.StatusInternalServerError, errDBResponse.Error(), fmt.Errorf("zincSearch response: %w", err))
 	}
@@ -67,8 +67,8 @@ func DoRequest(w http.ResponseWriter, query string) error {
 	return err
 }
 
-// ZincSearchResponseStatus ensures we're getting the proper response status from the database.
-func ZincSearchResponseStatus(httpResponse *http.Response) (*EmailResponse, error) {
+// DataBaseResponseStatus ensures we're getting the proper response status from the database.
+func DataBaseResponseStatus(httpResponse *http.Response) (*EmailResponse, error) {
 	statusResponse := &EmailResponse{HTTPResponse: httpResponse}
 
 	defer closeResponseBody(httpResponse)

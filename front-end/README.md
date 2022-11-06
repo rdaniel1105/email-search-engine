@@ -1,4 +1,4 @@
-# mamuro-email
+# front-end
 
 ## Project setup
 ```

@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	searchPath = "/api/search"
+	searchPath    = "/api/search"
+	allowedOrigin = "http://localhost:8080"
 )
 
 // ServeRouter serves the router in which the server will be running
@@ -50,7 +51,7 @@ func Initialize() *chi.Mux {
 		//middleware.Heartbeat("/health"), //for heartbeat process such as Kubernetes liveprobeness
 		cors.Handler(cors.Options{
 			// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-			AllowedOrigins: []string{"http://localhost:8080"}, // TODO make this a const
+			AllowedOrigins: []string{allowedOrigin},
 			// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 			AllowedMethods:   []string{http.MethodGet},
 			AllowedHeaders:   []string{"Accept", "Content-Type"},
