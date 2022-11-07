@@ -28,6 +28,9 @@ func ServeRouter() {
 	}
 
 	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
 
 	r := Initialize()
 
@@ -48,30 +51,18 @@ func Initialize() *chi.Mux {
 		middleware.RedirectSlashes,
 		middleware.Logger,
 		middleware.Recoverer, //middleware to recover from panics
-		//middleware.Heartbeat("/health"), //for heartbeat process such as Kubernetes liveprobeness
 		cors.Handler(cors.Options{
-			// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-			AllowedOrigins: []string{allowedOrigin},
-			// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+			AllowedOrigins:   []string{allowedOrigin},
 			AllowedMethods:   []string{http.MethodGet},
 			AllowedHeaders:   []string{"Accept", "Content-Type"},
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: false,
-			MaxAge:           300, // Maximum value not ignored by any of major browsers
+			MaxAge:           300,
 		}),
 	)
 
-	//Sets context for all requests
 	router.Use(middleware.Timeout(30 * time.Second))
 
-	// router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	_, err := w.Write([]byte("Welcome"))
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 	}
-	// })
-
-	//routes
 	router.Route(searchPath, func(r chi.Router) {
 		r.Mount("/", handlers.Routes())
 	})

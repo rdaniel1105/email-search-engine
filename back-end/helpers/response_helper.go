@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"encoding/json"
+	"example/mamuro/models"
 	"fmt"
 	"net/http"
 )
@@ -36,8 +37,7 @@ func ResponseErrorChecker(JSONResponseErr error, err error) error {
 
 // ResponseErrorHelper calls and checks the JSONResponse func an returns the corresponding error
 func ResponseErrorHelper(w http.ResponseWriter, code int, payload string, err error) error {
-	JSONErrorCheck := JSONResponse(w, code, ErrorResponseMessage{"message": payload})
-	errorToReturn := ResponseErrorChecker(JSONErrorCheck, err)
+	JSONErrorCheck := JSONResponse(w, code, models.ErrorResponseMessage{"message": payload})
 
-	return errorToReturn
+	return ResponseErrorChecker(JSONErrorCheck, err)
 }

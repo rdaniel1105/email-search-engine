@@ -12,64 +12,63 @@ import (
 )
 
 type reqHeaders struct {
-	admin       string
-	password    string
-	ContentType string
-	UserAgent   string
-}
-
-var requestHeaders = reqHeaders{
-	"admin",
-	"Complexpass#123",
-	"application/json",
-	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+	contentType string
+	userAgent   string
 }
 
 var (
-	errDBRequest  = errors.New("internal server error, could not connect to database")
-	errDBResponse = errors.New("internal server error, unexpected response from database")
+	requestHeaders = reqHeaders{
+		contentType: "application/json",
+		userAgent:   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+	}
+
+	zincSearchURLSet = "http://localhost:4080/api/myindex/_search"
+
+	errDBRequest  = errors.New("could not connect to database")
+	errDBResponse = errors.New("unexpected response from database")
 )
-
-// EmailResponse copies the underlying structure coming from models
-type EmailResponse models.EmailResponse
-
-// ErrorResponseMessage will be used to send errors in JSONResponse
-type ErrorResponseMessage map[string]string
 
 // DoRequest performs a request to zincsearch
 func DoRequest(w http.ResponseWriter, query string) error {
-	var email *EmailResponse
+	var matchedEmails *models.EmailResponse
 
 	zincSearchURL := os.Getenv("ZincSearchURL")
+	if zincSearchURL == "" {
+		zincSearchURL = zincSearchURLSet
+	}
+
+	admin := os.Getenv("ADMIN")
+	password := os.Getenv("PASSWORD")
 
 	req, err := http.NewRequest(http.MethodPost, zincSearchURL, strings.NewReader(query))
 	if err != nil {
 		return fmt.Errorf("newrequest wrapping: %w", err)
 	}
 
-	req.SetBasicAuth(requestHeaders.admin, requestHeaders.password)
-	req.Header.Set("Content-Type", requestHeaders.ContentType)
-	req.Header.Set("User-Agent", requestHeaders.UserAgent)
+	req.SetBasicAuth(admin, password)
+	req.Header.Set("Content-Type", requestHeaders.contentType)
+	req.Header.Set("User-Agent", requestHeaders.userAgent)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return ResponseErrorHelper(w, http.StatusInternalServerError, errDBRequest.Error(), fmt.Errorf("zincSearch request: %w", err))
 	}
 
-	email, err = DataBaseResponseStatus(resp)
+	matchedEmails, err = DataBaseResponseStatus(resp)
 	if err != nil {
 		return ResponseErrorHelper(w, http.StatusInternalServerError, errDBResponse.Error(), fmt.Errorf("zincSearch response: %w", err))
 	}
 
-	JSONErrorCheck := JSONResponse(w, http.StatusOK, map[string]interface{}{"total": email.Hits.Total, "hits": email.Hits.Hits})
+	JSONErrorCheck :=
+		JSONResponse(w, http.StatusOK, map[string]interface{}{"total": matchedEmails.Hits.Total, "hits": matchedEmails.Hits.Hits})
 	err = ResponseErrorChecker(JSONErrorCheck, nil)
 
 	return err
 }
 
 // DataBaseResponseStatus ensures we're getting the proper response status from the database.
-func DataBaseResponseStatus(httpResponse *http.Response) (*EmailResponse, error) {
-	statusResponse := &EmailResponse{HTTPResponse: httpResponse}
+func DataBaseResponseStatus(httpResponse *http.Response) (*models.EmailResponse, error) {
+	statusResponse := &models.EmailResponse{HTTPResponse: httpResponse}
 
 	defer closeResponseBody(httpResponse)
 

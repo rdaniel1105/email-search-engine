@@ -1,6 +1,15 @@
 package helpers
 
-import "net/http"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+	"strconv"
+)
+
+var (
+	errLimitValueExceeded = errors.New("the maximux limit is 100")
+)
 
 // GetQueryParamsForRequest returns all relevant query parameters.
 func GetQueryParamsForRequest(r *http.Request, term string) (string, error) {
@@ -23,22 +32,27 @@ func GetQueryParamsForRequest(r *http.Request, term string) (string, error) {
 		return query, nil
 	}
 
-	if from != "" {
-		err := ValidateQueryParams(from)
-		if err != nil {
-			return "", err
-		}
-	} else {
+	if from == "" {
 		from = "0"
 	}
 
-	if limit != "" {
-		err := ValidateQueryParams(limit)
-		if err != nil {
-			return "", err
-		}
-	} else {
+	if limit == "" {
 		limit = "25"
+	}
+
+	err := ValidateQueryParams(from)
+	if err != nil {
+		return "", err
+	}
+
+	err = ValidateQueryParams(limit)
+	if err != nil {
+		return "", err
+	}
+
+	limit, err = limitChecker(limit)
+	if err != nil {
+		return "", err
 	}
 
 	query = SetQueryForRequest(from, limit, term)
@@ -61,4 +75,17 @@ func SetQueryForRequest(from string, limit string, term string) string {
 			}`
 
 	return query
+}
+
+func limitChecker(limit string) (string, error) {
+	numLimit, err := strconv.ParseInt(limit, 36, 64)
+	if err != nil {
+		return "", fmt.Errorf("limitChecker: %w", err)
+	}
+
+	if numLimit > 100 {
+		return "", errLimitValueExceeded
+	}
+
+	return strconv.FormatInt(numLimit, 36), nil
 }
