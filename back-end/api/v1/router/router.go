@@ -53,9 +53,8 @@ func Initialize() *chi.Mux {
 		middleware.Recoverer, //middleware to recover from panics
 		cors.Handler(cors.Options{
 			AllowedOrigins:   []string{allowedOrigin},
-			AllowedMethods:   []string{http.MethodGet},
-			AllowedHeaders:   []string{"Accept", "Content-Type"},
-			ExposedHeaders:   []string{"Link"},
+			AllowedMethods:   []string{http.MethodPost},
+			AllowedHeaders:   []string{"Accept", "Content-Type", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"},
 			AllowCredentials: false,
 			MaxAge:           300,
 		}),

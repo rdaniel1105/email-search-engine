@@ -21,7 +21,7 @@ var (
 func Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/", ListEmails)
+	r.Post("/", ListEmails)
 
 	return r
 }
