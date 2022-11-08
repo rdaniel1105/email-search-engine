@@ -4,19 +4,17 @@ export interface MatchedEmails{
 }
 
 export interface EmailsTypes {
-    body      :string
-	date      :string
-	from      :string
-	messageID :string
-	subject   :string
-	to        :string 
+    Body      ?:string
+	Date      ?:string
+	From      ?:string
+	Subject   ?:string
+	To        ?:string 
 }
 
 export interface SourceType {
-	Index     :string      
-	Type      :string      
-	ID        :string      
-	Score     :number     
-	TimeStamp :string
-	Source    :EmailsTypes   
+	_index     ?:string      
+	_type      ?:string      
+	_id        ?:string      
+	_score     ?:number     
+	_source    ?:EmailsTypes  
 }

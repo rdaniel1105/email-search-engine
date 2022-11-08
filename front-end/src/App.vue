@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col min-h-screen bg-cool-blacky">
     <site-navigation/>
-    <main>
+    <main class="h-full">
       <search-input/>
     </main>
   </div>
