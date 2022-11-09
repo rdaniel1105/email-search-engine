@@ -1,6 +1,6 @@
 <template>
   <div>
-    <form @click.prevent="">
+    <form>
       <div class="relative p-3.5 items-center px-5">
         <div
           class="
@@ -138,11 +138,16 @@
       </div>
     </form>
   </div>
-  <div
-    v-if="entries.hits"
-    class="max-w-[50%] text-white overflow-x-auto w-full h-full p-4"
-  >
-    <Datatable :email="entries" />
+  <div v-if="data.hits" class="block relative w-full p-4">
+      <div class="relative float-left max-w-[50%] text-white overflow-x-auto">
+        <Datatable
+        :emails-received="data"
+        @display-email="displayEmail"
+      />
+      </div>
+      <div class="text-white h-full float-right w-1/2 p-3">
+      <p>{{ emailInside }}</p>
+    </div>
   </div>
 </template>
   
@@ -178,8 +183,16 @@ export default defineComponent({
   //     }
   // },
   setup() {
-    let emails = reactive<{ entries: MatchedEmails }>({ entries: {} });
+    let emails = reactive<{ data: MatchedEmails }>({ data: {} });
     let searchTerm = ref("");
+    let showEntries = ref([5, 10, 15, 20, 25, 50, 75, 100, 125, 150]);
+    let currentEntries = ref(25);
+    let filteredEntries = ref([]);
+    let currentPage = ref(1);
+    let allPages = ref(1);
+    let email = reactive<{ emailInside: string | undefined }>({
+      emailInside: "",
+    });
 
     const searchEmail = async (search: string): Promise<void> => {
       interface Termix {
@@ -190,9 +203,11 @@ export default defineComponent({
         term: search,
       };
 
+      email.emailInside = ""
+
       try {
         const email = await emailsSearch(Term);
-        emails.entries = email;
+        emails.data = email;
 
         console.log("entries", emails);
       } catch (err) {
@@ -200,7 +215,23 @@ export default defineComponent({
       }
     };
 
-    return { searchEmail, ...toRefs(emails), searchTerm };
+    const displayEmail = (body: string) => {
+      email.emailInside = body;
+    };
+
+    return {
+      searchEmail,
+      displayEmail,
+      ...toRefs(emails),
+      ...toRefs(email),
+      email,
+      searchTerm,
+      showEntries,
+      currentEntries,
+      filteredEntries,
+      currentPage,
+      allPages,
+    };
   },
 });
 </script>
