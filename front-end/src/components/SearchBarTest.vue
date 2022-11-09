@@ -16,7 +16,7 @@
             text-base
             min-w-[200px]
             w-full
-            max-w-2xl
+            max-w-[100%]
             mx-auto
             appearance-none
             outline-none
@@ -98,28 +98,13 @@
             />
           </div>
           <div class="flex pl-1">
-            <label
-              for="search-dropdown"
-              class="
-                mb-2
-                text-sm
-                font-medium
-                text-gray-900
-                sr-only
-                dark:text-gray-300
-              "
-            ></label>
             <button
-              id="dropdown-button"
-              data-dropdown-toggle="dropdown"
+              id="dropdownLimitButton"
+              data-dropdown-toggle="dropdownLimit"
+              data-dropdown-placement="rigth"
               class="flex"
-              type="button"
-              gh="sda"
               viewBox="0 0 20 20"
-              role="button"
-              data-tooltip="Show filters"
-              aria-label="Filter options"
-              style=""
+              @click.prevent="toggleFilter()"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -134,18 +119,57 @@
               </svg>
             </button>
           </div>
+          <div
+                id="dropdownLimit"
+                aria-labelledby="dropdownLimitButton"
+                class="
+                absolute
+                rounded-t bg-gray-200 py-2 px-4 whitespace-no-wrap 
+                  hidden w-[10%]
+                  z-10 mt-10 left-[87%]
+                  rounded
+                  divide-y divide-gray-100
+                  shadow
+                  dark:bg-gray-700
+                "
+              >
+              <p>Select a limit</p>
+              <input type="text" class="dark:bg-gray-700/70
+                border-none
+                flex-grow flex-wrap flex-shrink
+                basis-0
+                h-9
+                w-full
+                -mt-1
+                pb-1
+                focus:border-none focus:outline-none
+                text-cool-blacky text-lg
+                focus:transparent" v-model="limit">
+              <div class=" bg-slate-900 rounded">
+                <button class="w-full outline-none border-none" @click.prevent="toggleFilter()">Set</button>
+              </div>
+              </div>
         </div>
       </div>
     </form>
   </div>
-  <div v-if="data.hits" class="block relative w-full p-4">
-      <div class="relative float-left max-w-[50%] text-white overflow-x-auto">
-        <Datatable
-        :emails-received="data"
-        @display-email="displayEmail"
-      />
-      </div>
-      <div class="text-white h-full float-right w-1/2 p-3">
+  <div v-if="data.hits" class="relative w-full p-2">
+    <div class="relative float-left text-white max-w-[53%] pb-2 pt-2">
+      <Datatable :emails-received="data" @display-email="displayEmail" />
+    </div>
+    <div
+      class="
+        relative
+        text-white
+        h-full
+        w-full
+        float-right
+        max-w-[43%]
+        pl-0
+        p-3.5
+        whitespace-pre-line
+      "
+    >
       <p>{{ emailInside }}</p>
     </div>
   </div>
@@ -186,11 +210,11 @@ export default defineComponent({
     let emails = reactive<{ data: MatchedEmails }>({ data: {} });
     let searchTerm = ref("");
     let showEntries = ref([5, 10, 15, 20, 25, 50, 75, 100, 125, 150]);
-    let currentEntries = ref(25);
+    let limit = ref(25);
     let filteredEntries = ref([]);
     let currentPage = ref(1);
     let allPages = ref(1);
-    let email = reactive<{ emailInside: string | undefined }>({
+    let email = reactive<{ emailInside: any | undefined }>({
       emailInside: "",
     });
 
@@ -203,10 +227,11 @@ export default defineComponent({
         term: search,
       };
 
-      email.emailInside = ""
+      email.emailInside = "";
 
       try {
-        const email = await emailsSearch(Term);
+        let queryLimit = limit.value
+        const email = await emailsSearch(Term,queryLimit);
         emails.data = email;
 
         console.log("entries", emails);
@@ -215,19 +240,39 @@ export default defineComponent({
       }
     };
 
-    const displayEmail = (body: string) => {
+    const displayEmail = (body: any) => {
       email.emailInside = body;
+      backToTop();
     };
+
+    const backToTop = () => {
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    };
+
+   const toggleFilter = () => {
+    const limit = document.getElementById('dropdownLimit')
+    if (limit === null) return
+    
+    if (limit.style.display === "none" || limit.style.display === "") {
+      limit.style.display = "block"; 
+      return
+    }
+
+    limit.style.display = "none"
+  }
 
     return {
       searchEmail,
       displayEmail,
+      backToTop,
+      toggleFilter,
       ...toRefs(emails),
       ...toRefs(email),
       email,
       searchTerm,
       showEntries,
-      currentEntries,
+      limit,
       filteredEntries,
       currentPage,
       allPages,

@@ -78,7 +78,7 @@ func SetQueryForRequest(from string, limit string, term string) string {
 }
 
 func limitChecker(limit string) (string, error) {
-	numLimit, err := strconv.ParseInt(limit, 36, 64)
+	numLimit, err := strconv.Atoi(limit)
 	if err != nil {
 		return "", fmt.Errorf("limitChecker: %w", err)
 	}
@@ -87,5 +87,5 @@ func limitChecker(limit string) (string, error) {
 		return "", errLimitValueExceeded
 	}
 
-	return strconv.FormatInt(numLimit, 36), nil
+	return limit, nil
 }
