@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="wholePage">
     <form>
       <div class="relative p-3.5 items-center px-5">
         <div
@@ -16,7 +16,7 @@
             text-base
             min-w-[200px]
             w-full
-            max-w-[100%]
+            max-w-[70%]
             mx-auto
             appearance-none
             outline-none
@@ -37,8 +37,12 @@
           <div class="flex inset-y-0 left-0 items-center -mt-0.5 pr-3 pb-1">
             <div class="block m-auto">
               <button
-                id="lupa"
-                @click.prevent="searchEmail(searchTerm)"
+                @click.prevent="
+                  searchEmail(searchTerm),
+                    (ifActive = false),
+                    (currentPage = 1),
+                    (display = true)
+                "
                 class="relative h-5 leading-5 w-5 mt-[3px] inline-block dark"
               >
                 <svg
@@ -103,8 +107,9 @@
               data-dropdown-toggle="dropdownLimit"
               data-dropdown-placement="rigth"
               class="flex"
+              type="button"
               viewBox="0 0 20 20"
-              @click.prevent="toggleFilter()"
+              @click="ifActive = !ifActive"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -120,44 +125,124 @@
             </button>
           </div>
           <div
-                id="dropdownLimit"
-                aria-labelledby="dropdownLimitButton"
-                class="
-                absolute
-                rounded-t bg-gray-200 py-2 px-4 whitespace-no-wrap 
-                  hidden w-[10%]
-                  z-10 mt-10 left-[87%]
-                  rounded
-                  divide-y divide-gray-100
-                  shadow
-                  dark:bg-gray-700
-                "
-              >
-              <p>Select a limit</p>
-              <input type="text" class="dark:bg-gray-700/70
+            id="dropdownLimit"
+            aria-labelledby="dropdownLimitButton"
+            :class="ifActive ? 'block' : 'hidden'"
+            class="
+              absolute
+              rounded-t
+              py-1
+              px-4
+              whitespace-no-wrap
+              w-[10%]
+              z-10
+              mt-10
+              left-[83%]
+              rounded
+              divide-y divide-gray-100
+              shadow
+              dark:bg-gray-600
+            "
+          >
+            <p>Select a limit</p>
+            <input
+              type="text"
+              class="
+                dark:bg-slate-400
+                rounded-md
                 border-none
                 flex-grow flex-wrap flex-shrink
                 basis-0
                 h-9
                 w-full
-                -mt-1
+                mt-1
+                mb-1.5
                 pb-1
                 focus:border-none focus:outline-none
                 text-cool-blacky text-lg
-                focus:transparent" v-model="limit">
-              <div class=" bg-slate-900 rounded">
-                <button class="w-full outline-none border-none" @click.prevent="toggleFilter()">Set</button>
-              </div>
-              </div>
+                focus:transparent
+              "
+              v-model="limit"
+            />
+            <div class="rounded">
+              <button
+                type="button"
+                @click="(ifActive = false), searchEmail(searchTerm),currentPage=1"
+                class="w-full outline-none border-none bg-violet-700"
+              >
+                Set
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </form>
   </div>
-  <div v-if="data.hits" class="relative w-full p-2">
+  <div
+    id="entries"
+    :class="!display ? 'hidden' : 'block'"
+    @click="ifActive = false"
+    class="mx-2 my-2 text-white relative py-1 pb-0"
+  >
+    <div>Showing {{ currentPage }} of {{ allPages }}</div>
+    <ul class="flex">
+      <li :class="[{ 'pointer-events-none': currentPage === 1 }]" class="bg-white">
+        <a
+          href="#"
+          type="button"
+          @click.prevent="(currentPage = 1), (isActive = true),searchEmail(searchTerm)"
+          :class="isActive ? 'bg-cyan-600' : 'bg-white'"
+          class="text-cool-blacky space-x-0 hover:bg-cyan-600 bg-cyan-600 px-1"
+        >
+          First
+        </a>
+      </li>
+      <li :class="[{ 'pointer-events-none': currentPage === 1 }]" class="bg-white">
+        <a
+          href="#"
+          type="button"
+          @click.prevent="
+              currentPage <= 1 ? (currentPage = 1) : (currentPage -= 1),
+              searchEmail(searchTerm)
+          "
+          class="text-cool-blacky space-x-0 hover:bg-cyan-600 px-1"
+        >
+          Previous
+        </a>
+      </li>
+      <li :class="[{ 'pointer-events-none': currentPage === allPages }]" class="bg-white">
+        <a
+          href="#"
+          type="button"
+          @click.prevent="
+            currentPage >= allPages
+              ? (currentPage = allPages)
+              : (currentPage += 1),
+              searchEmail(searchTerm)
+          "
+          class="text-cool-blacky space-x-0 hover:bg-cyan-600 px-1"
+        >
+          Next
+        </a>
+      </li>
+      <li :class="[{ 'pointer-events-none': currentPage === allPages }]" class="bg-white">
+        <a
+          href="#"
+          type="button"
+          @click.prevent="currentPage=allPages,searchEmail(searchTerm)"
+          class="text-cool-blacky space-x-0 hover:bg-cyan-600 px-1"
+        >
+          Last
+        </a>
+      </li>
+    </ul>
+  </div>
+  <div v-if="data.hits" @click="ifActive = false" class="relative w-full p-2">
     <div class="relative float-left text-white max-w-[53%] pb-2 pt-2">
       <Datatable :emails-received="data" @display-email="displayEmail" />
     </div>
     <div
+      @click="ifActive = false"
       class="
         relative
         text-white
@@ -179,68 +264,76 @@
 import { defineComponent, reactive, ref, toRefs } from "vue";
 import Datatable from "@/views/DataTable.vue";
 import { emailsSearch } from "@/services/emailsAPI";
-import { MatchedEmails } from "@/types/interface";
+import { MatchedEmails, TermType } from "@/types/interface";
 
 export default defineComponent({
   name: "SearchInput",
   components: {
     Datatable,
   },
-  // data() {
-  //     return {
-  //     entries: [] as MatchedEmails,
-  //     searchTerm: ""
-  //     };
-  // },
-  // methods: {
-  //     async searchEmail(searchTerm :string): Promise<void>{
-  //         interface Termix {
-  //             term: string
-  //         }
-
-  //         let Term: Termix = {
-  //             term: searchTerm
-  //         }
-
-  //         const resp = await emailsSearch(Term);
-  //         this.entries = resp;
-  //     }
-  // },
   setup() {
-    let emails = reactive<{ data: MatchedEmails }>({ data: {} });
+    let matchedEmails = reactive<{ data: MatchedEmails }>({ data: {} });
     let searchTerm = ref("");
-    let showEntries = ref([5, 10, 15, 20, 25, 50, 75, 100, 125, 150]);
     let limit = ref(25);
-    let filteredEntries = ref([]);
-    let currentPage = ref(1);
-    let allPages = ref(1);
-    let email = reactive<{ emailInside: any | undefined }>({
+    let paginatedEntries = reactive<{ paginatedPages: Array<number> }>({
+      paginatedPages: [],
+    });
+    let currentPageReactive = reactive<{ currentPage: number }>({
+      currentPage: 1,
+    });
+    let allPagesReactive = reactive<{ allPages: number }>({ allPages: 1 });
+    let email = reactive<{ emailInside: string | undefined }>({
       emailInside: "",
     });
+    let styleObject = reactive<{
+      display: boolean;
+    }>({ display: false });
+    let filterDisplay = reactive<{
+      ifActive: boolean;
+    }>({ ifActive: false });
+    let currentPageBG = reactive<{
+      isActive: boolean;
+    }>({ isActive: false });
 
     const searchEmail = async (search: string): Promise<void> => {
-      interface Termix {
-        term: string;
-      }
-
-      let Term: Termix = {
+      let Term: TermType = {
         term: search,
       };
 
       email.emailInside = "";
 
       try {
-        let queryLimit = limit.value
-        const email = await emailsSearch(Term,queryLimit);
-        emails.data = email;
+          currentPageBG.isActive = false;
+          paginatedEntries.paginatedPages = [];
+        let queryLimit = limit.value;
+        let queryFrom = 0
 
-        console.log("entries", emails);
+        if (allPagesReactive.allPages > 1) {
+          queryFrom = currentPageReactive.currentPage * limit.value
+        }
+
+        if (currentPageReactive.currentPage === allPagesReactive.allPages && allPagesReactive.allPages > 1) {
+          queryFrom = (allPagesReactive.allPages - 1)*limit.value
+        }
+
+        if (currentPageReactive.currentPage == 1) {
+          queryFrom = 0
+        }
+
+        const emails = await emailsSearch(
+          Term,
+          queryLimit,
+          queryFrom
+        );
+        matchedEmails.data = emails;
+
+        calculateEntries(matchedEmails.data.total?.value);
       } catch (err) {
-        console.log(err);
+        console.log(err); // Handle error and show sum
       }
     };
 
-    const displayEmail = (body: any) => {
+    const displayEmail = (body: string) => {
       email.emailInside = body;
       backToTop();
     };
@@ -250,32 +343,36 @@ export default defineComponent({
       document.documentElement.scrollTop = 0;
     };
 
-   const toggleFilter = () => {
-    const limit = document.getElementById('dropdownLimit')
-    if (limit === null) return
-    
-    if (limit.style.display === "none" || limit.style.display === "") {
-      limit.style.display = "block"; 
-      return
-    }
+    const calculateEntries = (total: number | undefined) => {
+      if (total == undefined) {
+        return;
+      }
 
-    limit.style.display = "none"
-  }
+      allPagesReactive.allPages = total / limit.value;
+      if (allPagesReactive.allPages % limit.value != 0) {
+        allPagesReactive.allPages += 1 - (allPagesReactive.allPages % 1);
+      }
+
+      for (let i = 0; i < allPagesReactive.allPages; i++) {
+        paginatedEntries.paginatedPages[i] = i + 1;
+      }
+    };
 
     return {
       searchEmail,
       displayEmail,
       backToTop,
-      toggleFilter,
-      ...toRefs(emails),
+      ...toRefs(matchedEmails),
       ...toRefs(email),
+      ...toRefs(allPagesReactive),
+      ...toRefs(paginatedEntries),
+      ...toRefs(currentPageReactive),
+      ...toRefs(styleObject),
+      ...toRefs(filterDisplay),
+      ...toRefs(currentPageBG),
       email,
       searchTerm,
-      showEntries,
       limit,
-      filteredEntries,
-      currentPage,
-      allPages,
     };
   },
 });
