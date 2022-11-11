@@ -38,10 +38,11 @@
             <div class="block m-auto">
               <button
                 @click.prevent="
-                  searchEmail(searchTerm),
-                    (ifActive = false),
+                  (showFilter = false),
                     (currentPage = 1),
-                    (display = true)
+                    (showEntries = true),
+                    (allPages = 1),
+                    searchEmail(searchTerm)
                 "
                 class="relative h-5 leading-5 w-5 mt-[3px] inline-block dark"
               >
@@ -109,7 +110,7 @@
               class="flex"
               type="button"
               viewBox="0 0 20 20"
-              @click="ifActive = !ifActive"
+              @click="showFilter = !showFilter"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -127,7 +128,7 @@
           <div
             id="dropdownLimit"
             aria-labelledby="dropdownLimitButton"
-            :class="ifActive ? 'block' : 'hidden'"
+            :class="showFilter ? 'block' : 'hidden'"
             class="
               absolute
               rounded-t
@@ -167,7 +168,13 @@
             <div class="rounded">
               <button
                 type="button"
-                @click="(ifActive = false), searchEmail(searchTerm),currentPage=1"
+                @click="
+                  (showFilter = false),
+                    (currentPage = 1),
+                    (showEntries = true),
+                    (allPages = 1),
+                    searchEmail(searchTerm)
+                "
                 class="w-full outline-none border-none bg-violet-700"
               >
                 Set
@@ -180,29 +187,34 @@
   </div>
   <div
     id="entries"
-    :class="!display ? 'hidden' : 'block'"
-    @click="ifActive = false"
-    class="mx-2 my-2 text-white relative py-1 pb-0"
+    :class="showEntries ? 'block' : 'hidden'"
+    @click="showFilter = false"
+    class="mx-2 my-2 text-white relative p-1 pb-0 rounded-xl"
   >
     <div>Showing {{ currentPage }} of {{ allPages }}</div>
-    <ul class="flex">
-      <li :class="[{ 'pointer-events-none': currentPage === 1 }]" class="bg-white">
+    <ul class="flex w-[200px] divide-x divide-gray-300 rounded-lg border-2">
+      <li
+        :class="[{ 'pointer-events-none': currentPage === 1 }]"
+        class="bg-white"
+      >
         <a
           href="#"
           type="button"
-          @click.prevent="(currentPage = 1), (isActive = true),searchEmail(searchTerm)"
-          :class="isActive ? 'bg-cyan-600' : 'bg-white'"
-          class="text-cool-blacky space-x-0 hover:bg-cyan-600 bg-cyan-600 px-1"
+          @click.prevent="(currentPage = 1), searchEmail(searchTerm)"
+          class="text-cool-blacky space-x-0 hover:bg-cyan-600 px-1"
         >
           First
         </a>
       </li>
-      <li :class="[{ 'pointer-events-none': currentPage === 1 }]" class="bg-white">
+      <li
+        :class="[{ 'pointer-events-none': currentPage === 1 }]"
+        class="bg-white"
+      >
         <a
           href="#"
           type="button"
           @click.prevent="
-              currentPage <= 1 ? (currentPage = 1) : (currentPage -= 1),
+            currentPage < 1 ? (currentPage = 1) : (currentPage -= 1),
               searchEmail(searchTerm)
           "
           class="text-cool-blacky space-x-0 hover:bg-cyan-600 px-1"
@@ -210,12 +222,15 @@
           Previous
         </a>
       </li>
-      <li :class="[{ 'pointer-events-none': currentPage === allPages }]" class="bg-white">
+      <li
+        :class="[{ 'pointer-events-none': currentPage === allPages }]"
+        class="bg-white"
+      >
         <a
           href="#"
           type="button"
           @click.prevent="
-            currentPage >= allPages
+            currentPage > allPages
               ? (currentPage = allPages)
               : (currentPage += 1),
               searchEmail(searchTerm)
@@ -225,11 +240,14 @@
           Next
         </a>
       </li>
-      <li :class="[{ 'pointer-events-none': currentPage === allPages }]" class="bg-white">
+      <li
+        :class="[{ 'pointer-events-none': currentPage === allPages }]"
+        class="bg-white"
+      >
         <a
           href="#"
           type="button"
-          @click.prevent="currentPage=allPages,searchEmail(searchTerm)"
+          @click.prevent="(currentPage = allPages), searchEmail(searchTerm)"
           class="text-cool-blacky space-x-0 hover:bg-cyan-600 px-1"
         >
           Last
@@ -237,12 +255,12 @@
       </li>
     </ul>
   </div>
-  <div v-if="data.hits" @click="ifActive = false" class="relative w-full p-2">
-    <div class="relative float-left text-white max-w-[53%] pb-2 pt-2">
+  <div v-if="data.hits" @click="showFilter = false" class="relative w-full p-2">
+    <div class="relative float-left text-white w-full max-w-[53%] pb-2 pt-2">
       <Datatable :emails-received="data" @display-email="displayEmail" />
     </div>
     <div
-      @click="ifActive = false"
+      @click="showFilter = false"
       class="
         relative
         text-white
@@ -258,42 +276,47 @@
       <p>{{ emailInside }}</p>
     </div>
   </div>
+  <div
+    :class="noEmailsMatched ? 'block' : 'hidden'"
+    class="text-white text-center"
+  >
+    <p>Sorry, we could not find any emails with this term :(</p>
+  </div>
 </template>
   
 <script lang="ts">
 import { defineComponent, reactive, ref, toRefs } from "vue";
-import Datatable from "@/views/DataTable.vue";
+import Datatable from "@/views/EmailsTable/DataTable.vue";
 import { emailsSearch } from "@/services/emailsAPI";
 import { MatchedEmails, TermType } from "@/types/interface";
 
 export default defineComponent({
-  name: "SearchInput",
   components: {
     Datatable,
   },
   setup() {
-    let matchedEmails = reactive<{ data: MatchedEmails }>({ data: {} });
-    let searchTerm = ref("");
-    let limit = ref(25);
-    let paginatedEntries = reactive<{ paginatedPages: Array<number> }>({
-      paginatedPages: [],
-    });
-    let currentPageReactive = reactive<{ currentPage: number }>({
-      currentPage: 1,
-    });
-    let allPagesReactive = reactive<{ allPages: number }>({ allPages: 1 });
-    let email = reactive<{ emailInside: string | undefined }>({
-      emailInside: "",
-    });
-    let styleObject = reactive<{
-      display: boolean;
-    }>({ display: false });
-    let filterDisplay = reactive<{
-      ifActive: boolean;
-    }>({ ifActive: false });
-    let currentPageBG = reactive<{
-      isActive: boolean;
-    }>({ isActive: false });
+    let matchedEmails = reactive<{ data: MatchedEmails }>({ data: {} }),
+      searchTerm = ref(""),
+      limit = ref(25),
+      paginatedEntries = reactive<{ paginatedPages: Array<number> }>({
+        paginatedPages: [],
+      }),
+      currentPageReactive = reactive<{ currentPage: number }>({
+        currentPage: 1,
+      }),
+      allPagesReactive = reactive<{ allPages: number }>({ allPages: 1 }),
+      email = reactive<{ emailInside: string | undefined }>({
+        emailInside: "",
+      }),
+      styleObject = reactive<{
+        showEntries: boolean;
+      }>({ showEntries: false }),
+      filterDisplay = reactive<{
+        showFilter: boolean;
+      }>({ showFilter: false }),
+      emptyResponse = reactive<{
+        noEmailsMatched: boolean;
+      }>({ noEmailsMatched: false });
 
     const searchEmail = async (search: string): Promise<void> => {
       let Term: TermType = {
@@ -303,33 +326,29 @@ export default defineComponent({
       email.emailInside = "";
 
       try {
-          currentPageBG.isActive = false;
-          paginatedEntries.paginatedPages = [];
+        emptyResponse.noEmailsMatched = false;
+        paginatedEntries.paginatedPages = [];
         let queryLimit = limit.value;
-        let queryFrom = 0
+        let queryFrom = (currentPageReactive.currentPage - 1) * limit.value;
 
-        if (allPagesReactive.allPages > 1) {
-          queryFrom = currentPageReactive.currentPage * limit.value
+        if (currentPageReactive.currentPage === 1) {
+          queryFrom = 1;
         }
 
-        if (currentPageReactive.currentPage === allPagesReactive.allPages && allPagesReactive.allPages > 1) {
-          queryFrom = (allPagesReactive.allPages - 1)*limit.value
+        const emails = await emailsSearch(Term, queryLimit, queryFrom);
+
+        if (typeof emails === "string") {
+          throw emails;
         }
 
-        if (currentPageReactive.currentPage == 1) {
-          queryFrom = 0
-        }
-
-        const emails = await emailsSearch(
-          Term,
-          queryLimit,
-          queryFrom
-        );
         matchedEmails.data = emails;
 
         calculateEntries(matchedEmails.data.total?.value);
       } catch (err) {
-        console.log(err); // Handle error and show sum
+        paginatedEntries.paginatedPages = [];
+        styleObject.showEntries = false;
+        matchedEmails.data = {};
+        emptyResponse.noEmailsMatched = true;
       }
     };
 
@@ -346,6 +365,12 @@ export default defineComponent({
     const calculateEntries = (total: number | undefined) => {
       if (total == undefined) {
         return;
+      }
+
+      if (total === 0) {
+        paginatedEntries.paginatedPages = [];
+        styleObject.showEntries = false;
+        emptyResponse.noEmailsMatched = true;
       }
 
       allPagesReactive.allPages = total / limit.value;
@@ -369,7 +394,7 @@ export default defineComponent({
       ...toRefs(currentPageReactive),
       ...toRefs(styleObject),
       ...toRefs(filterDisplay),
-      ...toRefs(currentPageBG),
+      ...toRefs(emptyResponse),
       email,
       searchTerm,
       limit,

@@ -23,7 +23,7 @@
         tabindex="0"
       >
         <td class="px-4 py-1">
-          <button>{{ emails._source?.Subject }}</button>
+          <button class="truncate max-w-[100px]">{{ emails._source?.Subject }}</button>
         </td>
         <td class="px-4 py-1">
           <button>{{ emails._source?.From }}</button>

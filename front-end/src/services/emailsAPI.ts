@@ -1,22 +1,26 @@
-import { MatchedEmails } from "@/types/interface";
-// require("dotenv").config(); // Check
-// from: number, limit: number
-// const url = new URL(`https://localhost:8080?from=${from}&limit=${limit}`);
-// const queryParams = new URLSearchParams(url.search);
+import { MatchedEmails, TermType } from "@/types/interface";
 
+let apiURL = process.env.VUE_APP_SERVER_URL;
 
-export const emailsSearch = async (term: any,limit: number,from:number): Promise<MatchedEmails> => {//TODO error
-  // const apiURL = process.env.SERVER_URL
+export const emailsSearch = async(term: TermType,limit: number,from:number) : Promise<MatchedEmails | string> => {
   const headers = new Headers()
-  headers.append('Access-Control-Allow-Origin', 'http://localhost:3000/api/search');
+  if (apiURL === undefined) {
+    apiURL = "http://localhost:3000/api/search"
+  }
+
+  headers.append('Access-Control-Allow-Origin',apiURL );
   headers.append('Content-Type', 'application/json');
   headers.append('Accept', 'application/json');
 
-  const response = await fetch(`http://localhost:3000/api/search?limit=${limit}&from=${from}`, {
+    const response = await fetch(apiURL+`?limit=${limit}&from=${from}`, {
     method: 'POST',
     headers: headers,
     body: JSON.stringify(term)
-  })
+    })
 
-  return await response.json();
+    if (response.status == 500){
+      return ("Sorry, we could not find any emails with this term :(");
+    }
+
+    return response.json()
 }
