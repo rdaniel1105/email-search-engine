@@ -256,7 +256,7 @@
     </ul>
   </div>
   <div v-if="data.hits" @click="showFilter = false" class="relative w-full p-2">
-    <div class="relative float-left text-white w-full max-w-[53%] pb-2 pt-2">
+    <div class="relative float-left text-white w-full max-w-[53%] p-3 pr-0">
       <Datatable :emails-received="data" @display-email="displayEmail" />
     </div>
     <div

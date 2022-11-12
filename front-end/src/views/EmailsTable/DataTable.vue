@@ -26,10 +26,10 @@
           <button class="truncate max-w-[100px]">{{ emails._source?.Subject }}</button>
         </td>
         <td class="px-4 py-1">
-          <button>{{ emails._source?.From }}</button>
+          <button class="truncate max-w-[180px]">{{ emails._source?.From }}</button>
         </td>
         <td class="px-4 py-1">
-          <button class="truncate max-w-[120px]">
+          <button class="truncate max-w-[150px]">
             {{ emails._source?.To }}
           </button>
         </td>
