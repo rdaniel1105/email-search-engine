@@ -22,7 +22,7 @@ var (
 		userAgent:   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
 	}
 
-	zincSearchURLSet = "http://localhost:4080/api/myindex/_search"
+	zincSearchURLSet = "http://localhost:4080/api/mamuroemail/_search"
 
 	errDBRequest  = errors.New("could not connect to database")
 	errDBResponse = errors.New("unexpected response from database")
@@ -61,12 +61,11 @@ func DoRequest(w http.ResponseWriter, query string) error {
 
 	JSONErrorCheck :=
 		JSONResponse(w, http.StatusOK, map[string]interface{}{"total": matchedEmails.Hits.Total, "hits": matchedEmails.Hits.Hits})
-	err = ResponseErrorChecker(JSONErrorCheck, nil)
 
-	return err
+	return ResponseErrorChecker(JSONErrorCheck, nil)
 }
 
-// DataBaseResponseStatus ensures we're getting the proper response status from the database.
+// DataBaseResponseStatus checks if we're getting the proper response status from the database.
 func DataBaseResponseStatus(httpResponse *http.Response) (*models.EmailResponse, error) {
 	statusResponse := &models.EmailResponse{HTTPResponse: httpResponse}
 
