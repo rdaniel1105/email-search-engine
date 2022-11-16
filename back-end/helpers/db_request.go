@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"encoding/json"
-	"errors"
 	"example/mamuro/models"
 	"fmt"
 	"io/ioutil"
@@ -23,9 +22,11 @@ var (
 	}
 
 	zincSearchURLSet = "http://localhost:4080/api/mamuroemail/_search"
+)
 
-	errDBRequest  = errors.New("could not connect to database")
-	errDBResponse = errors.New("unexpected response from database")
+const (
+	errDBRequest  = "zincSearch request, could not connect to database: %w"
+	errDBResponse = "zincSearch response, unexpected response from database: %w"
 )
 
 // DoRequest performs a request to zincsearch
@@ -51,16 +52,16 @@ func DoRequest(w http.ResponseWriter, query string) error {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return ResponseErrorHelper(w, http.StatusInternalServerError, errDBRequest.Error(), fmt.Errorf("zincSearch request: %w", err))
+		return ResponseErrorHelper(w, http.StatusInternalServerError, fmt.Errorf(errDBRequest, err))
 	}
 
 	matchedEmails, err = DataBaseResponseStatus(resp)
 	if err != nil {
-		return ResponseErrorHelper(w, http.StatusInternalServerError, errDBResponse.Error(), fmt.Errorf("zincSearch response: %w", err))
+		return ResponseErrorHelper(w, http.StatusInternalServerError, fmt.Errorf(errDBResponse, err))
 	}
 
 	JSONErrorCheck :=
-		JSONResponse(w, http.StatusOK, map[string]interface{}{"total": matchedEmails.Hits.Total, "hits": matchedEmails.Hits.Hits})
+		JSONResponse(w, http.StatusOK, map[string]interface{}{"DBresponse": matchedEmails.HTTPResponse, "total": matchedEmails.Hits.Total, "hits": matchedEmails.Hits.Hits})
 
 	return ResponseErrorChecker(JSONErrorCheck, nil)
 }

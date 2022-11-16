@@ -8,8 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestJSONResponse does asdasdas
 func TestJSONResponse(t *testing.T) {
 	err := JSONResponse(nil, http.StatusAccepted, math.NaN())
-	assert.Contains(t, err.Error(), "marshal json response")
+	assert.Contains(t, err.Error(), "json marshal response")
 }

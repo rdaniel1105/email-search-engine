@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	searchPath    = "/api/search"
+	searchPath    = "/api/v1/emails/search"
 	allowedOrigin = "http://localhost:8080"
 )
 
@@ -52,9 +52,10 @@ func Initialize() *chi.Mux {
 		middleware.Logger,
 		middleware.Recoverer, //middleware to recover from panics
 		cors.Handler(cors.Options{
-			AllowedOrigins:   []string{allowedOrigin},
-			AllowedMethods:   []string{http.MethodPost},
-			AllowedHeaders:   []string{"Accept", "Content-Type", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"},
+			AllowedOrigins: []string{allowedOrigin},
+			AllowedMethods: []string{http.MethodPost},
+			AllowedHeaders: []string{"Accept", "Content-Type",
+				"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"},
 			AllowCredentials: false,
 			MaxAge:           300,
 		}),

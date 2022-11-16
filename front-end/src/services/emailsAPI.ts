@@ -5,7 +5,7 @@ let apiURL = process.env.VUE_APP_SERVER_URL;
 export const emailsSearch = async(term: TermType,limit: number,from:number) : Promise<MatchedEmails | string> => {
   const headers = new Headers()
   if (apiURL === undefined) {
-    apiURL = "http://localhost:3000/api/search"
+    apiURL = "http://localhost:3000/api/v1/emails/search"
   }
 
   headers.append('Access-Control-Allow-Origin',apiURL );
@@ -20,6 +20,10 @@ export const emailsSearch = async(term: TermType,limit: number,from:number) : Pr
 
     if (response.status == 500){
       return ("Sorry, we could not find any emails with this term :(");
+    }
+
+    if (response.status == 400) {
+      return ("You must introduce a term!");
     }
 
     return response.json()
