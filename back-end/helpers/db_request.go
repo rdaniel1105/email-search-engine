@@ -21,27 +21,28 @@ var (
 		userAgent:   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
 	}
 
-	zincSearchURLSet = "http://localhost:4080/api/mamuroemail/_search"
+	// DBURLSet is the default Database URL in case the env fails.
+	DBURLSet = "http://localhost:4080/api/mamuroemail/_search"
 )
 
 const (
-	errDBRequest  = "zincSearch request, could not connect to database: %w"
-	errDBResponse = "zincSearch response, unexpected response from database: %w"
+	errDBRequest  = "DB request, could not connect to database: %w"
+	errDBResponse = "DB response, unexpected response from database: %w"
 )
 
-// DoRequest performs a request to zincsearch
+// DoRequest performs a request to the DB
 func DoRequest(w http.ResponseWriter, query string) error {
 	var matchedEmails *models.EmailResponse
 
-	zincSearchURL := os.Getenv("ZincSearchURL")
-	if zincSearchURL == "" {
-		zincSearchURL = zincSearchURLSet
+	DBURL := os.Getenv("DBURL")
+	if DBURL == "" {
+		DBURL = DBURLSet
 	}
 
 	admin := os.Getenv("ADMIN")
 	password := os.Getenv("PASSWORD")
 
-	req, err := http.NewRequest(http.MethodPost, zincSearchURL, strings.NewReader(query))
+	req, err := http.NewRequest(http.MethodPost, DBURL, strings.NewReader(query))
 	if err != nil {
 		return fmt.Errorf("newrequest wrapping: %w", err)
 	}
@@ -61,7 +62,7 @@ func DoRequest(w http.ResponseWriter, query string) error {
 	}
 
 	JSONErrorCheck :=
-		JSONResponse(w, http.StatusOK, map[string]interface{}{"DBresponse": matchedEmails.HTTPResponse, "total": matchedEmails.Hits.Total, "hits": matchedEmails.Hits.Hits})
+		JSONResponse(w, http.StatusOK, map[string]interface{}{"DBresponse": matchedEmails.HTTPResponse.StatusCode, "total": matchedEmails.Hits.Total, "hits": matchedEmails.Hits.Hits})
 
 	return ResponseErrorChecker(JSONErrorCheck, nil)
 }

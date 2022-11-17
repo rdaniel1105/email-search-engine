@@ -332,7 +332,7 @@ export default defineComponent({
         let queryFrom = (currentPageReactive.currentPage - 1) * limit.value;
 
         if (currentPageReactive.currentPage === 1) {
-          queryFrom = 1;
+          queryFrom = 0;
         }
 
         const emails = await emailsSearch(Term, queryLimit, queryFrom);

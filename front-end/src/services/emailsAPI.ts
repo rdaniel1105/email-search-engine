@@ -19,11 +19,11 @@ export const emailsSearch = async(term: TermType,limit: number,from:number) : Pr
     })
 
     if (response.status == 500){
-      return ("Sorry, we could not find any emails with this term :(");
+      return ("An error has ocurred");
     }
 
     if (response.status == 400) {
-      return ("You must introduce a term!");
+      return ("Sorry, we could not find any emails with this term :(");
     }
 
     return response.json()
