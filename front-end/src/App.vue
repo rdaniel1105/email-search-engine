@@ -1,20 +1,15 @@
 <template>
-  <div class="flex flex-col min-h-screen bg-cool-blacky">
-    <site-navigation/>
-    <main class="h-full">
-      <search-body/>
+  <div class="min-h-screen flex flex-col grain">
+    <SiteMasthead />
+    <main class="flex-1 max-w-masthead w-full mx-auto px-6 md:px-10 pb-24">
+      <SearchBody />
     </main>
+    <SiteFooter />
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
-// import SearchBox from './components/SearchBox.vue';
-import SiteNavigation from '@/components/SiteNavigation.vue';
+<script setup lang="ts">
+import SiteMasthead from '@/components/SiteMasthead.vue';
+import SiteFooter from '@/components/SiteFooter.vue';
 import SearchBody from '@/components/SearchBody.vue';
-
-export default defineComponent({
-  components: { SiteNavigation, SearchBody },
-  name: 'App',
-});
 </script>

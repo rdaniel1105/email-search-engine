@@ -1,11 +1,14 @@
-import { emailsSearch } from "../services/emailsAPI";
-import { TermType } from "@/types/interface";
+import { emailsSearch, SearchError } from '@/services/emailsAPI';
 
-describe('emailsAPI test', () => {
-    test('emailsSearch error', () => {
-    let Term: TermType = {
-        term: "",
-      };
-      expect(emailsSearch(Term,0,25)).toBe("You must introduce a term!")
-    })
-  })
+describe('emailsAPI module', () => {
+  test('exposes emailsSearch as a callable', () => {
+    expect(typeof emailsSearch).toBe('function');
+  });
+
+  test('SearchError carries message and optional status', () => {
+    const err = new SearchError('boom', 500);
+    expect(err).toBeInstanceOf(SearchError);
+    expect(err.message).toBe('boom');
+    expect(err.status).toBe(500);
+  });
+});

@@ -1,28 +1,34 @@
-export interface MatchedEmails {
-	total?: TotalType
-	hits?: SourceType[]
+// Domain types for the search response. Mirrors the back-end's EmailResponse
+// (see back-end/models/email.go) and the JSON-encoded wrapper returned from
+// /api/v1/emails/search.
+
+export interface EmailSource {
+  Body?: string;
+  Date?: string;
+  From?: string;
+  'Message-ID'?: string;
+  Subject?: string;
+  To?: string;
 }
 
-export interface TotalType {
-	value: number
+export interface EmailHit {
+  _id?: string;
+  _index?: string;
+  _score?: number;
+  _source?: EmailSource;
 }
 
-export interface EmailsTypes {
-	Body?: string
-	Date?: string
-	From?: string
-	Subject?: string
-	To?: string
+export interface SearchTotal {
+  value: number;
 }
 
-export interface SourceType {
-	_index?: string
-	_type?: string
-	_id?: string
-	_score?: number
-	_source?: EmailsTypes
+export interface SearchResponse {
+  total?: SearchTotal;
+  hits?: EmailHit[];
 }
 
-export interface TermType {
-	term: string;
-  }
+export interface SearchTerm {
+  term: string;
+}
+
+export type SearchStatus = 'idle' | 'loading' | 'success' | 'empty' | 'error';

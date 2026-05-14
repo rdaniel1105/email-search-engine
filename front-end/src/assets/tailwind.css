@@ -1,5 +1,114 @@
 @tailwind base;
-
 @tailwind components;
-
 @tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    background-color: theme('colors.paper.DEFAULT');
+    color: theme('colors.ink.DEFAULT');
+    font-family: theme('fontFamily.serif');
+    font-size: 17px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-image:
+      radial-gradient(ellipse at top, rgba(168, 162, 142, 0.12), transparent 60%),
+      radial-gradient(circle at 80% 110%, rgba(122, 27, 27, 0.06), transparent 55%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background-color: theme('colors.oxblood.DEFAULT');
+    color: theme('colors.paper.DEFAULT');
+  }
+
+  *:focus-visible {
+    outline: 2px solid theme('colors.oxblood.DEFAULT');
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .hairline {
+    @apply border-t border-ink/15;
+  }
+
+  .eyebrow {
+    @apply font-mono text-[0.68rem] uppercase tracking-widest text-ink-muted;
+  }
+
+  .masthead-title {
+    font-family: theme('fontFamily.display');
+    font-weight: 900;
+    font-variation-settings: 'opsz' 144;
+    letter-spacing: theme('letterSpacing.masthead');
+    line-height: 0.95;
+  }
+
+  .display-headline {
+    font-family: theme('fontFamily.display');
+    font-weight: 600;
+    font-variation-settings: 'opsz' 36;
+    line-height: 1.1;
+  }
+
+  .smallcaps {
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.08em;
+  }
+
+  .paper-rule {
+    background-image: linear-gradient(
+      to right,
+      theme('colors.ink.DEFAULT') 0,
+      theme('colors.ink.DEFAULT') 60%,
+      transparent 60%
+    );
+    background-size: 12px 1px;
+    background-repeat: repeat-x;
+    background-position: left center;
+    height: 1px;
+    border: 0;
+  }
+
+  .grain {
+    position: relative;
+  }
+
+  .grain::before {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: 240px;
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+  }
+}
+
+@layer utilities {
+  .stagger > * {
+    opacity: 0;
+    animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.02s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.05s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.08s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.11s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.14s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.17s; }
+  .stagger > *:nth-child(7) { animation-delay: 0.20s; }
+  .stagger > *:nth-child(8) { animation-delay: 0.23s; }
+  .stagger > *:nth-child(9) { animation-delay: 0.26s; }
+  .stagger > *:nth-child(10) { animation-delay: 0.29s; }
+  .stagger > *:nth-child(n+11) { animation-delay: 0.32s; }
+}
