@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,16 +11,22 @@ import (
 )
 
 // JSONResponse serializes payload and writes it as a JSON response.
+// HTML-escape is disabled so characters like '<', '>', '&' (common in
+// Message-IDs and email bodies) render as themselves rather than the
+// noisy < / > / & escapes.
 func JSONResponse(w http.ResponseWriter, code int, payload interface{}) error {
-	response, err := json.Marshal(payload)
-	if err != nil {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+
+	if err := enc.Encode(payload); err != nil {
 		return fmt.Errorf("json marshal response: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 
-	if _, err := w.Write(response); err != nil {
+	if _, err := w.Write(buf.Bytes()); err != nil {
 		return fmt.Errorf("json write response: %w", err)
 	}
 

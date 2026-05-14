@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rdaniel1105/email-search-engine/back-end/helpers"
+	"github.com/rdaniel1105/email-search-engine/back-end/models"
 )
 
 const maxBodyBytes = 64 * 1024 // 64 KB cap for incoming search-request bodies
@@ -57,10 +58,7 @@ func ListEmails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := helpers.JSONResponse(w, http.StatusOK, map[string]interface{}{
-		"total": result.Hits.Total,
-		"hits":  result.Hits.Hits,
-	}); err != nil {
+	if err := helpers.JSONResponse(w, http.StatusOK, models.ToSearchResponse(result)); err != nil {
 		log.Printf("write search response: %v", err)
 	}
 }
