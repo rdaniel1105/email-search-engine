@@ -18,50 +18,61 @@ import (
 const (
 	searchPath    = "/api/v1/emails/search"
 	allowedOrigin = "http://localhost:8080"
+	defaultPort   = "3000"
+
+	readTimeout    = 5 * time.Second
+	writeTimeout   = 30 * time.Second
+	requestTimeout = 30 * time.Second
+	corsMaxAge     = 300
 )
 
-// ServeRouter serves the router in which the server will be running
+// ServeRouter starts the HTTP server.
 func ServeRouter() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("error loading .env file")
+	if err := godotenv.Load(); err != nil {
+		log.Printf("no .env file loaded: %v (falling back to environment)", err)
 	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		port = defaultPort
 	}
 
 	r := Initialize()
 
-	fmt.Printf("server running in port:%+v", port)
 	server := http.Server{
-		Addr:        fmt.Sprintf(":%s", port),
-		Handler:     r,
-		ReadTimeout: 1000 * time.Second,
+		Addr:         fmt.Sprintf(":%s", port),
+		Handler:      r,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
 	}
+
+	log.Printf("server listening on :%s", port)
 	log.Fatal(server.ListenAndServe())
 }
 
-// Initialize initializes the Server
+// Initialize wires up middleware and routes and returns the chi router.
 func Initialize() *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(
-		render.SetContentType(render.ContentTypeJSON), //forces Content-type
+		render.SetContentType(render.ContentTypeJSON),
 		middleware.RedirectSlashes,
 		middleware.Logger,
-		middleware.Recoverer, //middleware to recover from panics
+		middleware.Recoverer,
 		cors.Handler(cors.Options{
 			AllowedOrigins: []string{allowedOrigin},
 			AllowedMethods: []string{http.MethodPost},
-			AllowedHeaders: []string{"Accept", "Content-Type",
-				"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"},
+			AllowedHeaders: []string{
+				"Accept",
+				"Content-Type",
+				"Access-Control-Allow-Origin",
+				"Access-Control-Allow-Credentials",
+			},
 			AllowCredentials: false,
-			MaxAge:           300,
+			MaxAge:           corsMaxAge,
 		}),
 	)
 
-	router.Use(middleware.Timeout(30 * time.Second))
+	router.Use(middleware.Timeout(requestTimeout))
 
 	router.Route(searchPath, func(r chi.Router) {
 		r.Mount("/", handlers.Routes())

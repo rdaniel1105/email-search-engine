@@ -2,103 +2,95 @@ package helpers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rdaniel1105/email-search-engine/back-end/models"
 )
 
-type reqHeaders struct {
-	contentType string
-	userAgent   string
-}
-
-var (
-	requestHeaders = reqHeaders{
-		contentType: "application/json",
-		userAgent:   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
-	}
-
+const (
 	defaultZincSearchURL   = "http://localhost:4080"
 	defaultZincSearchIndex = "emails"
+
+	contentTypeJSON = "application/json"
+	userAgent       = "email-search-engine"
+
+	dbRequestTimeout = 10 * time.Second
 )
 
-const (
-	errDBRequest  = "DB request, could not connect to database: %w"
-	errDBResponse = "DB response, unexpected response from database: %w"
+var (
+	httpClient = &http.Client{Timeout: dbRequestTimeout}
+
+	errDBUnreachable = errors.New("search database unavailable")
+	errDBResponse    = errors.New("unexpected response from search database")
 )
 
-// DoRequest performs a request to the DB
-func DoRequest(w http.ResponseWriter, query string) error {
-	var matchedEmails *models.EmailResponse
-
-	baseURL := os.Getenv("ZINCSEARCH_URL")
-	if baseURL == "" {
-		baseURL = defaultZincSearchURL
-	}
-
-	index := os.Getenv("ZINCSEARCH_INDEX")
-	if index == "" {
-		index = defaultZincSearchIndex
-	}
+// DoRequest performs a search against ZincSearch and returns the parsed
+// response. Internal errors (connection, decoding, upstream status) are
+// logged and surfaced as generic sentinel errors so callers can map them
+// to a safe client-facing message without leaking infrastructure details.
+func DoRequest(query string) (*models.EmailResponse, error) {
+	baseURL := envOr("ZINCSEARCH_URL", defaultZincSearchURL)
+	index := envOr("ZINCSEARCH_INDEX", defaultZincSearchIndex)
 
 	dbURL := fmt.Sprintf("%s/api/%s/_search", baseURL, index)
 
-	admin := os.Getenv("ZINCSEARCH_USERNAME")
-	password := os.Getenv("ZINCSEARCH_PASSWORD")
-
 	req, err := http.NewRequest(http.MethodPost, dbURL, strings.NewReader(query))
 	if err != nil {
-		return fmt.Errorf("newrequest wrapping: %w", err)
+		return nil, fmt.Errorf("new request: %w", err)
 	}
 
-	req.SetBasicAuth(admin, password)
-	req.Header.Set("Content-Type", requestHeaders.contentType)
-	req.Header.Set("User-Agent", requestHeaders.userAgent)
+	req.SetBasicAuth(os.Getenv("ZINCSEARCH_USERNAME"), os.Getenv("ZINCSEARCH_PASSWORD"))
+	req.Header.Set("Content-Type", contentTypeJSON)
+	req.Header.Set("User-Agent", userAgent)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
-		return ResponseErrorHelper(w, http.StatusInternalServerError, fmt.Errorf(errDBRequest, err))
+		log.Printf("zincsearch request: %v", err)
+		return nil, errDBUnreachable
 	}
+	defer closeResponseBody(resp)
 
-	matchedEmails, err = DataBaseResponseStatus(resp)
+	parsed, err := parseSearchResponse(resp)
 	if err != nil {
-		return ResponseErrorHelper(w, http.StatusInternalServerError, fmt.Errorf(errDBResponse, err))
+		log.Printf("zincsearch response: %v", err)
+		return nil, errDBResponse
 	}
 
-	JSONErrorCheck :=
-		JSONResponse(w, http.StatusOK, map[string]interface{}{"DBresponse": matchedEmails.HTTPResponse.StatusCode, "total": matchedEmails.Hits.Total, "hits": matchedEmails.Hits.Hits})
-
-	return ResponseErrorChecker(JSONErrorCheck, nil)
+	return parsed, nil
 }
 
-// DataBaseResponseStatus checks if we're getting the proper response status from the database.
-func DataBaseResponseStatus(httpResponse *http.Response) (*models.EmailResponse, error) {
-	statusResponse := &models.EmailResponse{HTTPResponse: httpResponse}
+func parseSearchResponse(resp *http.Response) (*models.EmailResponse, error) {
+	out := &models.EmailResponse{HTTPResponse: resp}
 
-	defer closeResponseBody(httpResponse)
-
-	body, err := io.ReadAll(httpResponse.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("reading from API:", err)
-		return statusResponse, err
+		return nil, fmt.Errorf("read body: %w", err)
 	}
 
-	err = json.Unmarshal(body, statusResponse)
-	if err != nil {
-		fmt.Println("parsing JSON:", err)
-		return statusResponse, err
+	if err := json.Unmarshal(body, out); err != nil {
+		return nil, fmt.Errorf("decode body: %w", err)
 	}
 
-	return statusResponse, nil
+	return out, nil
 }
 
-func closeResponseBody(response *http.Response) {
-	err := response.Body.Close()
-	if err != nil {
-		fmt.Println("error closing response body:", err)
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+
+	return fallback
+}
+
+func closeResponseBody(resp *http.Response) {
+	if err := resp.Body.Close(); err != nil {
+		log.Printf("close response body: %v", err)
 	}
 }

@@ -2,20 +2,19 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 
-	"github.com/rdaniel1105/email-search-engine/back-end/helpers"
-
 	"github.com/go-chi/chi/v5"
+	"github.com/rdaniel1105/email-search-engine/back-end/helpers"
 )
 
+const maxBodyBytes = 64 * 1024 // 64 KB cap for incoming search-request bodies
+
 var (
-	errReadingRequestBody     = errors.New("reading request body")
-	errValidatingBody         = errors.New("validate body")
-	errGettingQueryForRequest = errors.New("get query for request")
-	errDoingRequest           = errors.New("DoRequest")
+	errReadingRequestBody = errors.New("could not read request body")
+	errInternal           = errors.New("internal server error")
 )
 
 // Routes creates a route for searching data in the API.
@@ -27,33 +26,41 @@ func Routes() chi.Router {
 	return r
 }
 
-// ListEmails displays the list of emails obtained from the request to ZincSearch.
+// ListEmails handles the email search request, validates input, queries
+// ZincSearch through the helpers layer, and writes the result as JSON.
 func ListEmails(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
+
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println(errReadingRequestBody, err)
+		log.Printf("read request body: %v", err)
+		helpers.WriteJSONError(w, http.StatusBadRequest, errReadingRequestBody)
 		return
 	}
 
-	term, err := helpers.ValidateBody(w, requestBody)
+	term, err := helpers.ValidateBody(requestBody)
 	if err != nil {
-		fmt.Println(errValidatingBody, err)
+		helpers.WriteJSONError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	query, err := helpers.GetQueryParamsForRequest(r, term)
 	if err != nil {
-		JSONErrorCheck := helpers.JSONResponse(w, http.StatusBadRequest, map[string]interface{}{"message": err})
-		err = helpers.ResponseErrorChecker(JSONErrorCheck, err)
-
-		fmt.Println(errGettingQueryForRequest, err)
-
+		helpers.WriteJSONError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	err = helpers.DoRequest(w, query)
+	result, err := helpers.DoRequest(query)
 	if err != nil {
-		fmt.Println(errDoingRequest, err)
+		log.Printf("DoRequest: %v", err)
+		helpers.WriteJSONError(w, http.StatusInternalServerError, errInternal)
 		return
+	}
+
+	if err := helpers.JSONResponse(w, http.StatusOK, map[string]interface{}{
+		"total": result.Hits.Total,
+		"hits":  result.Hits.Hits,
+	}); err != nil {
+		log.Printf("write search response: %v", err)
 	}
 }
