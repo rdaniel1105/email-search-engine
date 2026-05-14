@@ -1,7 +1,7 @@
 package main
 
 import (
-	"example/mamuro/api/v1/router"
+	"github.com/rdaniel1105/email-search-engine/back-end/api/v1/router"
 )
 
 func main() {

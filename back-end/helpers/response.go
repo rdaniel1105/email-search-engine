@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"encoding/json"
-	"example/mamuro/models"
+	"github.com/rdaniel1105/email-search-engine/back-end/models"
 	"fmt"
 	"net/http"
 )

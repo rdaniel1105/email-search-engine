@@ -2,12 +2,13 @@ package helpers
 
 import (
 	"encoding/json"
-	"example/mamuro/models"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/rdaniel1105/email-search-engine/back-end/models"
 )
 
 type reqHeaders struct {
@@ -21,8 +22,8 @@ var (
 		userAgent:   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
 	}
 
-	// DBURLSet is the default Database URL in case the env fails.
-	DBURLSet = "http://localhost:4080/api/mamuroemail/_search"
+	defaultZincSearchURL   = "http://localhost:4080"
+	defaultZincSearchIndex = "emails"
 )
 
 const (
@@ -34,15 +35,22 @@ const (
 func DoRequest(w http.ResponseWriter, query string) error {
 	var matchedEmails *models.EmailResponse
 
-	DBURL := os.Getenv("DBURL")
-	if DBURL == "" {
-		DBURL = DBURLSet
+	baseURL := os.Getenv("ZINCSEARCH_URL")
+	if baseURL == "" {
+		baseURL = defaultZincSearchURL
 	}
 
-	admin := os.Getenv("ADMIN")
-	password := os.Getenv("PASSWORD")
+	index := os.Getenv("ZINCSEARCH_INDEX")
+	if index == "" {
+		index = defaultZincSearchIndex
+	}
 
-	req, err := http.NewRequest(http.MethodPost, DBURL, strings.NewReader(query))
+	dbURL := fmt.Sprintf("%s/api/%s/_search", baseURL, index)
+
+	admin := os.Getenv("ZINCSEARCH_USERNAME")
+	password := os.Getenv("ZINCSEARCH_PASSWORD")
+
+	req, err := http.NewRequest(http.MethodPost, dbURL, strings.NewReader(query))
 	if err != nil {
 		return fmt.Errorf("newrequest wrapping: %w", err)
 	}
@@ -73,7 +81,7 @@ func DataBaseResponseStatus(httpResponse *http.Response) (*models.EmailResponse,
 
 	defer closeResponseBody(httpResponse)
 
-	body, err := ioutil.ReadAll(httpResponse.Body)
+	body, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		fmt.Println("reading from API:", err)
 		return statusResponse, err

@@ -1,18 +1,18 @@
 package router
 
 import (
-	"example/mamuro/api/v1/handlers"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/joho/godotenv"
+	"github.com/rdaniel1105/email-search-engine/back-end/api/v1/handlers"
 )
 
 const (

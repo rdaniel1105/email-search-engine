@@ -1,2 +1,6 @@
-
 .env
+.env.local
+
+# Build output
+/back-end
+*.exe

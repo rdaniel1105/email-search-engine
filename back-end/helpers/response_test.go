@@ -5,10 +5,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestJSONResponse(t *testing.T) {
+	c := require.New(t)
+
 	err := JSONResponse(nil, http.StatusAccepted, math.NaN())
-	assert.Contains(t, err.Error(), "json marshal response")
+	c.ErrorContains(err, "json marshal response")
 }

@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"errors"
-	"example/mamuro/helpers"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+
+	"github.com/rdaniel1105/email-search-engine/back-end/helpers"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -28,7 +29,7 @@ func Routes() chi.Router {
 
 // ListEmails displays the list of emails obtained from the request to ZincSearch.
 func ListEmails(w http.ResponseWriter, r *http.Request) {
-	requestBody, err := ioutil.ReadAll(r.Body)
+	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println(errReadingRequestBody, err)
 		return
