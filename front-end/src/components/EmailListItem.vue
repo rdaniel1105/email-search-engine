@@ -11,18 +11,18 @@
   >
     <div class="flex items-baseline justify-between gap-4 mb-2">
       <span class="eyebrow text-oxblood">№ {{ index }}</span>
-      <time v-if="email._source?.Date" class="font-mono text-[0.7rem] text-ink-muted">{{ shortDate }}</time>
+      <time v-if="email.date" class="font-mono text-[0.7rem] text-ink-muted">{{ shortDate }}</time>
     </div>
 
     <h3 class="display-headline text-xl md:text-2xl text-ink mb-2 group-hover:underline underline-offset-[6px] decoration-ink/30">
-      {{ email._source?.Subject || 'Untitled dispatch' }}
+      {{ email.subject || 'Untitled dispatch' }}
     </h3>
 
     <div class="font-serif text-[0.95rem] text-ink-soft mb-1 italic">
-      <span class="smallcaps text-ink-muted not-italic mr-1">from</span>{{ email._source?.From || 'unknown sender' }}
+      <span class="smallcaps text-ink-muted not-italic mr-1">from</span>{{ email.from || 'unknown sender' }}
     </div>
-    <div v-if="email._source?.To" class="font-serif text-[0.9rem] text-ink-muted mb-3 italic truncate">
-      <span class="smallcaps not-italic mr-1">to</span>{{ email._source?.To }}
+    <div v-if="email.to" class="font-serif text-[0.9rem] text-ink-muted mb-3 italic truncate">
+      <span class="smallcaps not-italic mr-1">to</span>{{ email.to }}
     </div>
 
     <p v-if="preview" class="font-serif text-ink-soft text-[0.95rem] leading-snug line-clamp-2">
@@ -48,7 +48,7 @@ const emit = defineEmits<{
 }>();
 
 const shortDate = computed(() => {
-  const raw = props.email._source?.Date;
+  const raw = props.email.date;
   if (!raw) return '';
   const parsed = new Date(raw);
   if (Number.isNaN(parsed.getTime())) return raw;
@@ -56,7 +56,7 @@ const shortDate = computed(() => {
 });
 
 const preview = computed(() => {
-  const body = props.email._source?.Body ?? '';
+  const body = props.email.body ?? '';
   return body.replace(/\s+/g, ' ').trim().slice(0, 220);
 });
 </script>

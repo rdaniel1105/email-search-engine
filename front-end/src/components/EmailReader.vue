@@ -7,18 +7,18 @@
       <div class="eyebrow text-oxblood mb-3">Reading Pane</div>
 
       <h2 class="display-headline text-2xl md:text-3xl text-ink mb-4">
-        {{ email._source?.Subject || 'Untitled dispatch' }}
+        {{ email.subject || 'Untitled dispatch' }}
       </h2>
 
       <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm mb-6 border-t border-b border-ink/15 py-3">
         <dt class="eyebrow self-center">From</dt>
-        <dd class="font-serif text-ink-soft break-all">{{ email._source?.From }}</dd>
+        <dd class="font-serif text-ink-soft break-all">{{ email.from }}</dd>
         <dt class="eyebrow self-center">To</dt>
-        <dd class="font-serif text-ink-soft break-all">{{ email._source?.To }}</dd>
-        <dt v-if="email._source?.Date" class="eyebrow self-center">Date</dt>
-        <dd v-if="email._source?.Date" class="font-mono text-xs text-ink-muted">{{ email._source.Date }}</dd>
-        <dt v-if="messageId" class="eyebrow self-center">ID</dt>
-        <dd v-if="messageId" class="font-mono text-[0.7rem] text-ink-faint break-all">{{ messageId }}</dd>
+        <dd class="font-serif text-ink-soft break-all">{{ email.to }}</dd>
+        <dt v-if="email.date" class="eyebrow self-center">Date</dt>
+        <dd v-if="email.date" class="font-mono text-xs text-ink-muted">{{ email.date }}</dd>
+        <dt v-if="email.id" class="eyebrow self-center">ID</dt>
+        <dd v-if="email.id" class="font-mono text-[0.7rem] text-ink-faint break-all">{{ email.id }}</dd>
       </dl>
 
       <div class="font-serif text-ink leading-relaxed whitespace-pre-wrap text-[1rem]">
@@ -48,6 +48,5 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const messageId = computed(() => props.email?._source?.['Message-ID']);
-const bodyText = computed(() => props.email?._source?.Body?.trim() ?? '');
+const bodyText = computed(() => props.email?.body?.trim() ?? '');
 </script>

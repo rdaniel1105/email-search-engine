@@ -22,12 +22,12 @@
       <ol class="stagger divide-y divide-ink/15 -mx-5">
         <li
           v-for="(hit, idx) in results.hits"
-          :key="hit._id || idx"
+          :key="hit.id || idx"
         >
           <EmailListItem
             :email="hit"
             :index="from + idx + 1"
-            :selected="selectedId === (hit._id ?? String(idx))"
+            :selected="selectedId === (hit.id || String(idx))"
             @select="selectEmail(hit, idx)"
           />
         </li>
@@ -108,7 +108,7 @@ async function performSearch(): Promise<void> {
     if (controller.signal.aborted) return;
 
     results.hits = response.hits ?? [];
-    results.total = response.total?.value ?? 0;
+    results.total = response.total ?? 0;
 
     status.value = results.total === 0 ? 'empty' : 'success';
   } catch (err) {
@@ -135,7 +135,7 @@ function onPageChange(page: number): void {
 }
 
 function selectEmail(hit: EmailHit, idx: number): void {
-  selectedId.value = hit._id ?? String(idx);
+  selectedId.value = hit.id || String(idx);
   selectedEmail.value = hit;
 }
 
